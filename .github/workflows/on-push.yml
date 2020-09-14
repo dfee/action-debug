@@ -1,0 +1,45 @@
+name: on-push
+
+on:
+  push:
+    branches:
+      - "master"
+
+jobs:
+  check-skip-ci:
+    outputs:
+      skip-ci: ${{ steps.check-commit-message.outputs.skip-ci }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - id: check-commit-message
+        run: |
+          if git log --format=%B -n 1 ${{ github.ref }} | grep "\[skip ci]" &> /dev/null; \
+          then echo "::set-output name=skip-ci::true"; \
+          else echo "::set-output name=skip-ci::false"; \
+          fi
+
+  if-skip-ci:
+    if: needs.check-skip-ci.outputs.skip-ci == 'true'
+    needs: check-skip-ci
+    runs-on: ubuntu-latest
+
+    steps:
+      # Begin setup
+      - uses: actions/checkout@v2
+      - run: |
+          echo ${{ github.ref }}
+          echo $(git log --format=%B -n 1 ${{ github.ref }})
+
+  else-skip-ci:
+    if: needs.check-skip-ci.outputs.skip-ci == 'false'
+    needs: check-skip-ci
+    runs-on: ubuntu-latest
+
+    steps:
+      # Begin setup
+      - uses: actions/checkout@v2
+      - run: |
+          echo ${{ github.ref }}
+          echo $(git log --format=%B -n 1 ${{ github.ref }})
