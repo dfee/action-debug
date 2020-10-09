@@ -1,0 +1,29 @@
+name: on-release
+
+on:
+  push:
+    tags:
+      - "release@*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version
+        required: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Identify target ref
+        id: target
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "::set-output name=ref::${{ github.ref }}"
+          else
+            echo "::set-output name=ref::refs/tags/release@${{ github.event.inputs.version }}"
+          fi
+      - run: echo version was was ${{ steps.target.outputs.ref }}
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ steps.target.outputs.ref }}
+      - run: echo $(git rev-parse HEAD)
